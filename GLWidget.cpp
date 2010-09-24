@@ -6,40 +6,39 @@
 
 #include "GLWidget.h"
 
-double rotX = 0;
-double rotY = 0;
+#define W 100
+#define H 100
+
+double rotX = 20;
+double rotY = 20;
 
 GLWidget::GLWidget(QWidget *parent) : QGLWidget(parent),
-    model(10, 10, "a.in") {
+    model(W, H) {
     setMouseTracking(true);
-    for (int i = 0; i < 10; ++i)
-        model.step();
 }
 
 void GLWidget::initializeGL() {
+    static float ambient[] = { 0.1, 0.1, 0.1, 1.0 };
+    static float diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+    static float position[] = { 0.0, 0.0, -150.0, 0.0 };
+    static float front_mat_diffuse[] = { 0.0, 0.0, 1.0, 1.0 };
+    static float back_mat_diffuse[] = { 0.0, 0.0, 1.0, 1.0 };
+    static float lmodel_ambient[] = { 1.0, 1.0, 1.0, 1.0 };
+    static float lmodel_twoside[] = { GL_TRUE };
 
     glFrontFace(GL_CCW);
     glEnable(GL_DEPTH_TEST);
 
-    // lighting
-    static float ambient[]        = { 0.1, 0.1, 0.1, 1.0 };
-    static float diffuse[]        = { 1.0, 1.0, 1.0, 1.0 };
-    static float position[]       = { 0.0, 0.0, -150.0, 0.0 };
-    static float lmodel_ambient[] = { 1.0, 1.0, 1.0, 1.0 };
-    static float lmodel_twoside[] = { GL_TRUE };
-    glEnable(GL_LIGHTING);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
     glLightfv(GL_LIGHT0, GL_POSITION, position);
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-    glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
-    glEnable(GL_LIGHT0);
-
-    // material
-    static float front_mat_diffuse[] = { 0.0, 0.0, 1.0, 1.0 };
-    static float back_mat_diffuse[]  = { 0.0, 0.0, 0.4, 1.0 };
     glMaterialfv(GL_FRONT, GL_DIFFUSE, front_mat_diffuse);
     glMaterialfv(GL_BACK, GL_DIFFUSE, back_mat_diffuse);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+    glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
     glEnable(GL_AUTO_NORMAL);
 }
 
@@ -52,6 +51,10 @@ void GLWidget::resizeGL(int w, int h) {
 }
 
 void GLWidget::paintGL() {
+    static double x[W*H];
+    static double y[W*H];
+    static double z[W*H];
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPushMatrix();
 
@@ -59,20 +62,26 @@ void GLWidget::paintGL() {
     glRotatef(rotX, 1, 0, 0);
     glRotatef(rotY, 0, 1, 0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glShadeModel(GL_SMOOTH);
 
-    int i, j, n = 0;
-    for (j = 0; j < 10 - 1; ++j, ++n) {
-        for (i = 0; i < 10 - 1; ++i, ++n) {
-            glBegin(GL_TRIANGLE_STRIP);
-            glVertex3f(i * 0.2 - 1, model[n].h() - 1, j * 0.2 - 1); 
-            glVertex3f(i * 0.2 - 1, model[n + 10].h() - 1, (j + 1) * 0.2 - 1); 
-            glVertex3f((i + 1) * 0.2 - 1, model[n + 1].h() - 1, j * 0.2 - 1); 
-            glVertex3f((i + 1) * 0.2 - 1, model[n + 11].h() - 1, (j + 1) * 0.2 - 1);
-            glEnd();
+    int i, j, n;
+    for (j = 0, n = 0; j < H; ++j) {
+        for (i = 0; i < W; ++i, ++n) {
+            x[n] = i * 2.0 / W - 1;
+            y[n] = j * 2.0 / H - 1;
+            z[n] = model[n].h() - 1;
         }
+    }
+
+    for (j = 0, n = 0; j < H - 1; ++j) {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (i = 0; i < W; ++i, ++n) {
+            glVertex3f(x[n], z[n], y[n]); 
+            glVertex3f(x[n+W], z[n+W], y[n+W]); 
+        }
+        glEnd();
     }
 
     glPopMatrix();
@@ -107,6 +116,10 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
         break;
     case Qt::Key_Escape:
         close();
+        break;
+    case Qt::Key_Space:
+        model.step();
+        repaint();
         break;
     default:
         event->ignore();

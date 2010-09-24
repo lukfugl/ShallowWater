@@ -3,19 +3,18 @@
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
+#include <math.h>
 
-Model::Model(int width, int height, std::string filename) {
+Model::Model(int width, int height) {
     count = width * height;
     cells = new Cell[count];
     solutions = new Solution[count];
     Cell *north, *east, *south, *west;
-    std::ifstream file;
-    file.open(filename.c_str());
     int i, j, n = 0;
-    double h;
+    double h, iwidth = 1.0 / width, iheight = 1.0 / height;
     for (j = 0; j < height; ++j) {
         for (i = 0; i < width; ++i, ++n) {
-            file >> h;
+            h = 1 + exp(-400 * 0.5 * (pow((i + 0.5) * iwidth - 0.5, 2) + pow((j + 0.5) * iheight - 0.5, 2)));
             solutions[n] = Solution(h, 0, 0);
             north = (j == height-1 ? NULL : &cells[n+width]);
             east = (i == width-1 ? NULL : &cells[n+1]);
@@ -24,7 +23,6 @@ Model::Model(int width, int height, std::string filename) {
             cells[n].initialize(solutions[n], north, east, south, west);
         }
     }
-    file.close();
 }
 
 Model::~Model() {

@@ -1,9 +1,7 @@
 #include "solution.h"
 #include <iostream>
 
-const double HALFG = 1;
-const double DTDX = 0.01;
-const double DTDY = 0.01;
+const double HALFG = 5;
 
 Solution::Solution()
     : m_h(1), m_uh(0), m_vh(0) {
@@ -46,43 +44,53 @@ Solution::operator=(const Solution &other) {
 
 void
 Solution::applyF(Solution &F) {
-    double u = m_uh / m_h;
+    double u = (m_h == 0 ? 0 : (m_uh / m_h));
     double uvh = u * m_vh;
     double half_gh2 = HALFG * m_h * m_h;
-    F = Solution(m_uh, u * m_uh + half_gh2, uvh) * DTDX;
+    F = Solution(m_uh, u * m_uh + half_gh2, uvh);
 }
 
 void
 Solution::applyG(Solution &G) {
-    double v = m_vh / m_h;
+    double v = (m_h == 0 ? 0 : (m_vh / m_h));
     double uvh = v * m_uh;
     double half_gh2 = HALFG * m_h * m_h;
-    G = Solution(m_vh, uvh, v * m_vh + half_gh2) * DTDY;
+    G = Solution(m_vh, uvh, v * m_vh + half_gh2);
 }
 
 void
 Solution::applyFG(Solution &F, Solution &G) {
-    double u = m_uh / m_h;
-    double v = m_vh / m_h;
+    double u = (m_h == 0 ? 0 : (m_uh / m_h));
+    double v = (m_h == 0 ? 0 : (m_vh / m_h));
     double uvh = u * m_vh;
     double half_gh2 = HALFG * m_h * m_h;
-    F = Solution(m_uh, u * m_uh + half_gh2, uvh) * DTDX;
-    G = Solution(m_vh, uvh, v * m_vh + half_gh2) * DTDY;
+    F = Solution(m_uh, u * m_uh + half_gh2, uvh);
+    G = Solution(m_vh, uvh, v * m_vh + half_gh2);
 }
 
 Solution
-Solution::edgeF(double h) {
-    return Solution(0, HALFG * h * h, 0);
+Solution::edgeF() const {
+    return Solution(0, HALFG * m_h * m_h, 0);
 }
 
 Solution
-Solution::edgeG(double h) {
-    return Solution(0, 0, HALFG * h * h);
+Solution::edgeG() const {
+    return Solution(0, 0, HALFG * m_h * m_h);
 }
 
 double
 Solution::h() const {
     return m_h;
+}
+
+double
+Solution::u() const {
+    return (m_h == 0 ? 0 : m_uh / m_h);
+}
+
+double
+Solution::v() const {
+    return (m_h == 0 ? 0 : m_vh / m_h);
 }
 
 std::ostream&

@@ -1,6 +1,9 @@
 #include "cell.h"
 #include <iostream>
 
+const double DTDX = 0.01;
+const double DTDY = 0.01;
+
 void
 Cell::initialize(const Solution &initial, const Cell *north, const Cell *east,
         const Cell *south, const Cell *west) {
@@ -15,20 +18,20 @@ Cell::initialize(const Solution &initial, const Cell *north, const Cell *east,
 void
 Cell::updateMidpoints() {
     if (east)
-        ((center + east->center - (east->centerF - centerF)) * 0.5).applyF(rightF);
+        ((east->center + center) * 0.5 - (east->centerF - centerF) * 0.5 * DTDX).applyF(rightF);
     else
-        rightF = Solution::edgeF(center.h());
+        rightF = center.edgeF();
     if (north)
-        ((center + north->center - (north->centerG - centerG)) * 0.5).applyG(topG);
+        ((north->center + center) * 0.5 - (north->centerG - centerG) * 0.5 * DTDY).applyG(topG);
     else
-        topG = Solution::edgeG(center.h());
+        topG = center.edgeG();
 }
 
 Solution
 Cell::updateCenter() {
-    Solution bottomG = (south ? south->topG : Solution::edgeG(center.h()));
-    Solution leftF = (west ? west->rightF : Solution::edgeF(center.h()));
-    center = center + leftF - rightF + bottomG - topG;
+    Solution bottomG = (south ? south->topG : center.edgeG());
+    Solution leftF = (west ? west->rightF : center.edgeF());
+    center = center - (rightF - leftF) * DTDX - (topG - bottomG) * DTDY;
     center.applyFG(centerF, centerG);
     return center;
 }

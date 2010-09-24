@@ -6,7 +6,7 @@
 
 class Model {
 public:
-    Model(int width, int height, std::string filename);
+    Model(int width, int height);
     ~Model();
 
     void step();

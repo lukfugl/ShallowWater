@@ -21,11 +21,13 @@ public:
     void applyF(Solution &F);
     void applyG(Solution &G);
     void applyFG(Solution &F, Solution &G);
-    static Solution edgeF(double h);
-    static Solution edgeG(double h);
+    Solution edgeF() const;
+    Solution edgeG() const;
 
     // access
     double h() const;
+    double u() const;
+    double v() const;
 
 private:
     double m_h, m_uh, m_vh;
