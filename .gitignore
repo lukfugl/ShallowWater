@@ -1,0 +1,4 @@
+*.o
+ShallowWater
+Makefile
+moc_*.cpp
