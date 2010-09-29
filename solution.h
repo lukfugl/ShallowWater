@@ -15,6 +15,7 @@ public:
     Solution operator+(const Solution &other) const;
     Solution operator-(const Solution &other) const;
     Solution operator*(double scalar) const;
+    void scale(double ah, double au);
     Solution &operator=(const Solution &other);
 
     // calculation of F and G

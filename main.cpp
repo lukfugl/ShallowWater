@@ -5,7 +5,7 @@
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
-    GLWidget window;
+    GLWidget window(100, 100);
     window.resize(800,600);
     window.show();
 

@@ -6,15 +6,23 @@
 
 #include "GLWidget.h"
 
-#define W 100
-#define H 100
-
 double rotX = 20;
 double rotY = 20;
 
-GLWidget::GLWidget(QWidget *parent) : QGLWidget(parent),
-    model(W, H) {
+GLWidget::GLWidget(int w, int h, QWidget *parent) : QGLWidget(parent),
+    model(w, h), cx(w), cz(h) {
+    dx = 2.0 / cx;
+    dz = 2.0 / cz;
+    up = dx * dz;
+    v = new vec[cx * cz];
+    n = new vec[cx * cz];
+    updatePointsAndNormals();
     setMouseTracking(true);
+}
+
+GLWidget::~GLWidget() {
+    delete[] v;
+    delete[] n;
 }
 
 void GLWidget::initializeGL() {
@@ -49,14 +57,71 @@ void GLWidget::resizeGL(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void GLWidget::paintGL() {
-    static double x[W*H];
-    static double y[W*H];
-    static double z[W*H];
-    static double nx[W*H];
-    static double ny[W*H];
-    static double nz[W*H];
+void GLWidget::updatePointsAndNormals() {
+    int i, j, k;
+    double q, top, right, bottom, left;
 
+    for (j = 0, k = 0; j < cz; ++j) {
+        for (i = 0; i < cx; ++i, ++k) {
+            v[k][0] = i * dx - 1;
+            v[k][1] = model[k].h() - 1;
+            v[k][2] = j * dz - 1;
+        }
+    }
+
+    for (j = 0, k = 0; j < cz; ++j) {
+        for (i = 0; i < cx; ++i, ++k) {
+            if (j < cz-1)
+                top = dx * (v[k][1] - v[k+cx][1]);
+            if (i < cx-1)
+                right = dz * (v[k][1] - v[k+1][1]);
+            if (j > 0)
+                bottom = dx * (v[k-cx][1] - v[k][1]);
+            if (i > 0)
+                left = dz * (v[k-1][1] - v[k][1]);
+
+            if (j < cz-1) {
+                if (i > 0) {
+                    // top->left
+                    q = 1 / sqrt(left*left + top*top + up*up);
+                    n[k][0] += left * q;
+                    n[k][1] += up   * q;
+                    n[k][2] += top  * q;
+                }
+                if (i < cx-1) {
+                    // right->top
+                    q = 1 / sqrt(right*right + top*top + up*up);
+                    n[k][0] += right * q;
+                    n[k][1] += up    * q;
+                    n[k][2] += top   * q;
+                }
+            }
+            if (j > 0) {
+                if (i < cx-1) {
+                    // bottom->right
+                    q = 1 / sqrt(right*right + bottom*bottom + up*up);
+                    n[k][0] += right  * q;
+                    n[k][1] += up     * q;
+                    n[k][2] += bottom * q;
+                }
+                if (i > 0) {
+                    // left->bottom
+                    q = 1 / sqrt(left*left + bottom*bottom + up*up);
+                    n[k][0] += left   * q;
+                    n[k][1] += up     * q;
+                    n[k][2] += bottom * q;
+                }
+            }
+            // normalize
+            q = 1 / sqrt(n[k][0]*n[k][0] + n[k][1]*n[k][1] + n[k][2]*n[k][2]);
+            n[k][0] *= q;
+            n[k][1] *= q;
+            n[k][2] *= q;
+        }
+    }
+}
+
+void GLWidget::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPushMatrix();
 
@@ -66,75 +131,14 @@ void GLWidget::paintGL() {
 
     glShadeModel(GL_SMOOTH);
 
-    int i, j, n;
-    double dx = 2.0 / W, dy = 2.0 / H;
-    for (j = 0, n = 0; j < H; ++j) {
-        for (i = 0; i < W; ++i, ++n) {
-            x[n] = i * dx - 1;
-            y[n] = j * dy - 1;
-            z[n] = model[n].h() - 1;
-        }
-    }
-
-    double q, top, right, bottom, left, up = dx * dy;
-    for (j = 0, n = 0; j < H; ++j) {
-        for (i = 0; i < W; ++i, ++n) {
-            if (j < H-1)
-                top = dx * (z[n] - z[n+W]);
-            if (i < W-1)
-                right = dy * (z[n] - z[n+1]);
-            if (j > 0)
-                bottom = dx * (z[n-W] - z[n]);
-            if (i > 0)
-                left = dy * (z[n-1] - z[n]);
-
-            if (j < H-1) {
-                if (i > 0) {
-                    // top->left
-                    q = 1 / sqrt(left*left + top*top + up*up);
-                    nx[n] += left * q;
-                    ny[n] += top  * q;
-                    nz[n] += up   * q;
-                }
-                if (i < W-1) {
-                    // right->top
-                    q = 1 / sqrt(right*right + top*top + up*up);
-                    nx[n] += right * q;
-                    ny[n] += top   * q;
-                    nz[n] += up    * q;
-                }
-            }
-            if (j > 0) {
-                if (i < W-1) {
-                    // bottom->right
-                    q = 1 / sqrt(right*right + bottom*bottom + up*up);
-                    nx[n] += right  * q;
-                    ny[n] += bottom * q;
-                    nz[n] += up     * q;
-                }
-                if (i > 0) {
-                    // left->bottom
-                    q = 1 / sqrt(left*left + bottom*bottom + up*up);
-                    nx[n] += left   * q;
-                    ny[n] += bottom * q;
-                    nz[n] += up     * q;
-                }
-            }
-            // normalize
-            q = 1 / sqrt(nx[n]*nx[n] + ny[n]*ny[n] + nz[n]*nz[n]);
-            nx[n] *= q;
-            ny[n] *= q;
-            nz[n] *= q;
-        }
-    }
-
-    for (j = 0, n = 0; j < H - 1; ++j) {
+    int i, j, k;
+    for (j = 0, k = 0; j < cz - 1; ++j) {
         glBegin(GL_TRIANGLE_STRIP);
-        for (i = 0; i < W; ++i, ++n) {
-            glNormal3f(nx[n], nz[n], -ny[n]); 
-            glVertex3f(x[n], z[n], -y[n]); 
-            glNormal3f(nx[n+W], nz[n+W], -ny[n+W]); 
-            glVertex3f(x[n+W], z[n+W], -y[n+W]); 
+        for (i = 0; i < cx; ++i, ++k) {
+            glNormal3dv(n[k+cx]);
+            glVertex3dv(v[k+cx]);
+            glNormal3dv(n[k]);
+            glVertex3dv(v[k]);
         }
         glEnd();
     }
@@ -174,6 +178,7 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
         break;
     case Qt::Key_Space:
         model.step();
+        updatePointsAndNormals();
         repaint();
         break;
     default:

@@ -1,8 +1,9 @@
 #include "cell.h"
 #include <iostream>
+#include <stdlib.h>
 
-const double DTDX = 0.01;
-const double DTDY = 0.01;
+const double DTDX = 0.05;
+const double DTDY = 0.05;
 
 void
 Cell::initialize(const Solution &initial, const Cell *north, const Cell *east,
@@ -32,6 +33,7 @@ Cell::updateCenter() {
     Solution bottomG = (south ? south->topG : center.edgeG());
     Solution leftF = (west ? west->rightF : center.edgeF());
     center = center - (rightF - leftF) * DTDX - (topG - bottomG) * DTDY;
+    center.scale(1, 0.99); // very mild decay of velocity
     center.applyFG(centerF, centerG);
     return center;
 }

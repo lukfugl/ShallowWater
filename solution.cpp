@@ -1,7 +1,7 @@
 #include "solution.h"
 #include <iostream>
 
-const double HALFG = 5;
+const double HALFG = 10;
 
 Solution::Solution()
     : m_h(1), m_uh(0), m_vh(0) {
@@ -32,6 +32,13 @@ Solution::operator-(const Solution &other) const {
 Solution
 Solution::operator*(double scalar) const {
     return Solution(m_h * scalar, m_uh * scalar, m_vh * scalar);
+}
+
+void
+Solution::scale(double ah, double au) {
+    m_h *= ah;
+    m_uh *= au;
+    m_vh *= au;
 }
 
 Solution&

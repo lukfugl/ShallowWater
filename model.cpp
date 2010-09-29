@@ -14,7 +14,7 @@ Model::Model(int width, int height) {
     double h, iwidth = 1.0 / width, iheight = 1.0 / height;
     for (j = 0; j < height; ++j) {
         for (i = 0; i < width; ++i, ++n) {
-            h = 1 + exp(-400 * 0.5 * (pow((i + 0.5) * iwidth - 0.5, 2) + pow((j + 0.5) * iheight - 0.5, 2)));
+            h = 1 - exp(-800 * 0.5 * (pow((i + 0.5) * iwidth - 0.5, 2) + pow((j + 0.5) * iheight - 0.5, 2))) / 2;
             solutions[n] = Solution(h, 0, 0);
             north = (j == height-1 ? NULL : &cells[n+width]);
             east = (i == width-1 ? NULL : &cells[n+1]);
