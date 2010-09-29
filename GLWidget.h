@@ -2,6 +2,7 @@
 #define _GLWIDGET_H
 
 #include <QtOpenGL/QGLWidget>
+#include <QTimer>
 #include "model.h"
 
 class GLWidget : public QGLWidget {
@@ -12,14 +13,21 @@ public:
     GLWidget(int w, int h, QWidget *parent = NULL);
     virtual ~GLWidget();
 
+    void rotateLeft();
+    void rotateRight();
+    void rotateUp();
+    void rotateDown();
+
+public slots:
+    void playOne();
+    void playN(int n);
+    void playPause();
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
     void updatePointsAndNormals();
     void paintGL();
-    void mousePressEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-    void keyPressEvent(QKeyEvent *event);
 
     Model model;
 
@@ -29,6 +37,8 @@ protected:
     typedef double vec[3];
     vec *v;
     vec *n;
+
+    QTimer *timer;
 };
 
 #endif  /* _GLWIDGET_H */

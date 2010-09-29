@@ -1,4 +1,3 @@
-#include <QtGui/QMouseEvent>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,11 +17,35 @@ GLWidget::GLWidget(int w, int h, QWidget *parent) : QGLWidget(parent),
     n = new vec[cx * cz];
     updatePointsAndNormals();
     setMouseTracking(true);
+
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(playOne()));
 }
 
 GLWidget::~GLWidget() {
     delete[] v;
     delete[] n;
+}
+
+void GLWidget::playOne() {
+    model.step();
+    updatePointsAndNormals();
+    repaint();
+}
+
+void GLWidget::playN(int n) {
+    // yes, I know this code is littered with race conditions. for this
+    // project, I don't care
+    if (timer->isActive()) return;
+    for (int i = 0; i < n; ++i)
+        playOne();
+}
+
+void GLWidget::playPause() {
+    if (timer->isActive())
+        timer->stop();
+    else
+        timer->start();
 }
 
 void GLWidget::initializeGL() {
@@ -147,42 +170,22 @@ void GLWidget::paintGL() {
     glFlush();
 }
 
-void GLWidget::mousePressEvent(QMouseEvent *event) {
-
+void GLWidget::rotateLeft() {
+    rotY -= 10;
+    repaint();
 }
 
-void GLWidget::mouseMoveEvent(QMouseEvent *event) {
-
+void GLWidget::rotateRight() {
+    rotY += 10;
+    repaint();
 }
 
-void GLWidget::keyPressEvent(QKeyEvent* event) {
-    switch(event->key()) {
-    case Qt::Key_Left:
-        rotY -= 10;
-        repaint();
-        break;
-    case Qt::Key_Right:
-        rotY += 10;
-        repaint();
-        break;
-    case Qt::Key_Up:
-        rotX -= 10;
-        repaint();
-        break;
-    case Qt::Key_Down:
-        rotX += 10;
-        repaint();
-        break;
-    case Qt::Key_Escape:
-        close();
-        break;
-    case Qt::Key_Space:
-        model.step();
-        updatePointsAndNormals();
-        repaint();
-        break;
-    default:
-        event->ignore();
-        break;
-    }
+void GLWidget::rotateUp() {
+    rotX -= 10;
+    repaint();
+}
+
+void GLWidget::rotateDown() {
+    rotX += 10;
+    repaint();
 }

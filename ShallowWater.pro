@@ -9,10 +9,11 @@ INCLUDEPATH += .
 QT += opengl
 
 # Input
-HEADERS += cell.h GLWidget.h model.h solution.h
+HEADERS += cell.h GLWidget.h MainWidget.h model.h solution.h
 SOURCES += cell.cpp \
            GLWidget.cpp \
            main.cpp \
+           MainWidget.cpp \
            model.cpp \
            ShallowWater.cpp \
            solution.cpp
